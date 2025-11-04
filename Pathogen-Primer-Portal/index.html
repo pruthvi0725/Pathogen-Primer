@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathogen-Primer-Portal</title>
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Load Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- 3. Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a; /* Almost black background */
+        }
+        .font-mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #27272a; /* zinc-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #52525b; /* zinc-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #71717a; /* zinc-500 */
+        }
+        
+        /* Active filter button style */
+        .btn-filter.active {
+            background-color: #16a34a; /* green-600 */
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* --- New Modal & AI Styles --- */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-content {
+            transition: all 0.25s ease;
+        }
+        .ai-button {
+            background-color: #27272a; /* zinc-800 */
+            color: #16a34a; /* green-600 */
+            border: 1px solid #16a34a;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .ai-button:hover {
+            background-color: #16a34a;
+            color: #ffffff;
+        }
+        /* Simple loading spinner */
+        .loader {
+            border: 4px solid #3f3f46; /* zinc-700 */
+            border-top: 4px solid #34d399; /* emerald-400 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* --- End New Styles --- */
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row items-center justify-between border-b border-gray-700 pb-6 mb-8">
+            <div class="text-center md:text-left">
+                <h1 class="text-4xl font-bold text-white">Pathogen-Primer-Portal</h1>
+                <p class="text-xl text-gray-400 mt-1">Rapid Diagnostic Primer Database</p>
+            </div>
+            <!-- Icon -->
+            <div class="text-green-400 mt-4 md:mt-0 flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+        </header>
+
+        <!-- Controls: Filters and Search -->
+        <div class="flex flex-col md:flex-row gap-4 mb-6">
+            <!-- Crop Filters -->
+            <div class="flex-shrink-0">
+                <span class="text-sm font-medium text-gray-400 mr-3">Filter by Crop:</span>
+                <div id="filterContainer" class="inline-flex rounded-md shadow-sm" role="group">
+                    <button type="button" class="btn-filter active py-2 px-4 text-sm font-medium text-gray-200 bg-gray-700 rounded-l-lg border border-gray-600 hover:bg-gray-600" data-filter="all">
+                        All
+                    </button>
+                    <button type="button" class="btn-filter py-2 px-4 text-sm font-medium text-gray-200 bg-gray-700 border-t border-b border-gray-600 hover:bg-gray-600" data-filter="citrus">
+                        Citrus
+                    </button>
+                    <button type="button" class="btn-filter py-2 px-4 text-sm font-medium text-gray-200 bg-gray-700 border-t border-b border-gray-600 hover:bg-gray-600" data-filter="cotton">
+                        Cotton
+                    </button>
+                    <button type="button" class="btn-filter py-2 px-4 text-sm font-medium text-gray-200 bg-gray-700 border-t border-b border-gray-600 hover:bg-gray-600" data-filter="tomato">
+                        Tomato
+                    </button>
+                    <button type="button" class="btn-filter py-2 px-4 text-sm font-medium text-gray-200 bg-gray-700 rounded-r-lg border border-gray-600 hover:bg-gray-600" data-filter="rice">
+                        Rice
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Search by pathogen, primer, or organism...">
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Primer cards will be injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16 px-6 bg-gray-800 rounded-lg mt-6">
+            <svg class="mx-auto h-12 w-12 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <h3 class="mt-2 text-xl font-medium text-white">No Primers Found</h3>
+            <p class="mt-1 text-gray-400">Your search did not match any primers. Try adjusting your filters.</p>
+        </div>
+
+    </div>
+
+    <!-- --- New AI Modal --- -->
+    <div id="aiModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-800 w-full max-w-2xl rounded-lg shadow-xl border border-gray-700 p-6 transform scale-95">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-gray-700">
+                <h3 id="aiModalTitle" class="text-2xl font-semibold text-white">AI Assistant is thinking...</h3>
+                <button id="aiModalCloseBtn" class="text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div class="mt-4">
+                <!-- Loader -->
+                <div id="aiModalLoader" class="flex justify-center items-center h-48">
+                    <div class="loader"></div>
+                </div>
+
+                <!-- AI Response -->
+                <div id="aiModalResponse" class="hidden">
+                    <div id="aiModalContent" class="text-gray-200 whitespace-pre-wrap leading-relaxed max-h-[40vh] overflow-y-auto pr-2">
+                        <!-- AI content goes here -->
+                    </div>
+
+                    <h4 class="text-lg font-semibold text-white mt-6 mb-2 border-t border-gray-700 pt-4">Sources</h4>
+                    <ul id="aiModalSources" class="text-sm list-disc list-inside space-y-1 max-h-[20vh] overflow-y-auto pr-2">
+                        <!-- AI sources go here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- --- End AI Modal --- -->
+
+
+    <!-- JavaScript Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- The "Database" ---
+            const primerDB = [
+                {
+                    crop: "citrus",
+                    pathogen: "Citrus Greening (HLB)",
+                    organism: "Candidatus Liberibacter asiaticus",
+                    primerName: "A2/J5",
+                    type: "Conventional PCR",
+                    forward: "TTTATTTTGGATAACTTCAAAC",
+                    reverse: "ACAAATTATCTGAATAAATGA",
+                    productSize: "703 bp",
+                    reference: "Jagoueix et al. (1996). Mol Cell Probes. 10(1):43-50."
+                },
+                {
+                    crop: "citrus",
+                    pathogen: "Citrus Canker",
+                    organism: "Xanthomonas citri subsp. citri",
+                    primerName: "2/3",
+                    type: "Conventional PCR",
+                    forward: "GGCACCCTGCAGGCA",
+                    reverse: "GGTGGTCTGGATCAC",
+                    productSize: "550 bp",
+                    reference: "Hartung et al. (1993). Appl Environ Microbiol. 59(4):1143-8."
+                },
+                {
+                    crop: "citrus",
+                    pathogen: "Citrus Tristeza Virus (CTV)",
+                    organism: "Citrus tristeza virus",
+                    primerName: "VT-UP/VT-DOWN",
+                    type: "RT-PCR",
+                    forward: "GCAACGCTATGCAAAAGATTG",
+                    reverse: "TCAACGTGTGTTGAATTTCC",
+                    productSize: "330 bp",
+                    reference: "Hilf et al. (1995). J Virol Methods. 53(2):129-39."
+                },
+                {
+                    crop: "cotton",
+                    pathogen: "Cotton Leaf Curl Virus (CLCuV)",
+                    organism: "Cotton leaf curl Burewala virus",
+                    primerName: "CLCuV-F/CLCuV-R",
+                    type: "Conventional PCR",
+                    forward: "ATGGTTCCACCAACGAGAGC",
+                    reverse: "CTAGTCATGGGCTTATATGG",
+                    productSize: "500 bp",
+                    reference: "Briddon et al. (2003). Ann Appl Biol. 143: 161-169."
+                },
+                {
+                    crop: "cotton",
+                    pathogen: "Bacterial Blight",
+                    organism: "Xanthomonas axonopodis pv. malvacearum",
+                    primerName: "Xam-F/Xam-R",
+                    type: "Conventional PCR",
+                    forward: "ATGCGATCAGCCATCAT",
+                    reverse: "TTCGGTGGTCATGATCT",
+                    productSize: "420 bp",
+                    reference: "Kumar et al. (2010). J Plant Pathol. 92(1): 189-195."
+                },
+                {
+                    crop: "cotton",
+                    pathogen: "Verticillium Wilt",
+                    organism: "Verticillium dahliae",
+                    primerName: "Vd-F/Vd-R (ITS)",
+                    type: "Conventional PCR",
+                    forward: "TCTTAGTTGGCGAGAGTC",
+                    reverse: "GAGGTCGCCAATTGATAC",
+                    productSize: "530 bp",
+                    reference: "Robb et al. (1993). Plant Pathol. 42: 830-836."
+                },
+                // --- New Tomato Primers ---
+                {
+                    crop: "tomato",
+                    pathogen: "Tomato Yellow Leaf Curl Virus (TYLCV)",
+                    organism: "Tomato yellow leaf curl virus",
+                    primerName: "TYLCV-F/TYLCV-R",
+                    type: "Conventional PCR",
+                    forward: "GCTTCGACATCAATTCGTTC",
+                    reverse: "AATGGCCGAACTGGTTCTAC",
+                    productSize: "650 bp",
+                    reference: "Sánchez-Campos et al. (1999). J Virol Methods. 83(1-2):9-17."
+                },
+                {
+                    crop: "tomato",
+                    pathogen: "Fusarium Wilt",
+                    organism: "Fusarium oxysporum f. sp. lycopersici",
+                    primerName: "Fol-F/Fol-R",
+                    type: "Specific PCR",
+                    forward: "CTTGTAGGGTGGTGAATGTCC",
+                    reverse: "CCTTCGACGAGTCGAGTTGT",
+                    productSize: "400 bp",
+                    reference: "Mishra et al. (2003). FEMS Microbiol Lett. 218(1):131-6."
+                },
+                // --- New Rice Primers ---
+                {
+                    crop: "rice",
+                    pathogen: "Rice Blast",
+                    organism: "Magnaporthe oryzae",
+                    primerName: "Pot2-F/Pot2-R",
+                    type: "Specific PCR",
+                    forward: "AAGGTCGGTCATCTTCGTTG",
+                    reverse: "TTGTTGTTCGCAGCAGGTAT",
+                    productSize: "450 bp",
+                    reference: "Hittalmani et al. (2000). Theor Appl Genet. 100: 1120-1128."
+                },
+                {
+                    crop: "rice",
+                    pathogen: "Bacterial Blight",
+                    organism: "Xanthomonas oryzae pv. oryzae",
+                    primerName: "Xoo-1/Xoo-2",
+                    type: "Specific PCR",
+                    forward: "CGGTCAGTCCTCACCGAATC",
+                    reverse: "GGTATTCAGCCCGGTTGATG",
+                    productSize: "237 bp",
+                    reference: "Adachi & Tsuge (2006). J Gen Plant Pathol. 72: 332-337."
+                }
+            ];
+
+            // --- Element References ---
+            const resultsContainer = document.getElementById('resultsContainer');
+            const searchInput = document.getElementById('searchInput');
+            const filterContainer = document.getElementById('filterContainer');
+            const filterButtons = document.querySelectorAll('.btn-filter');
+            const emptyState = document.getElementById('emptyState');
+
+            // --- AI Modal Element References ---
+            const aiModal = document.getElementById('aiModal');
+            const aiModalTitle = document.getElementById('aiModalTitle');
+            const aiModalContent = document.getElementById('aiModalContent');
+            const aiModalSources = document.getElementById('aiModalSources');
+            const aiModalLoader = document.getElementById('aiModalLoader');
+            const aiModalResponse = document.getElementById('aiModalResponse');
+            const aiModalCloseBtn = document.getElementById('aiModalCloseBtn');
+
+            let currentFilter = 'all'; // 'all', 'citrus', 'cotton', 'tomato', 'rice'
+
+            // --- Core Functions ---
+
+            /**
+             * Renders the list of primer cards based on the provided array.
+             * @param {Array} primersToRender - A list of primer objects.
+             */
+            function renderPrimers(primersToRender) {
+                // Clear previous results
+                resultsContainer.innerHTML = '';
+
+                if (primersToRender.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                
+                primersToRender.forEach(primer => {
+                    const cropTagColor = primer.crop === 'citrus' 
+                        ? 'bg-yellow-700 text-yellow-100' 
+                        : (primer.crop === 'cotton' 
+                            ? 'bg-blue-700 text-blue-100'
+                            : (primer.crop === 'tomato'
+                                ? 'bg-red-700 text-red-100'
+                                : 'bg-teal-700 text-teal-100')); // Rice
+                    
+                    const cardHTML = `
+                        <div class="bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-700 transform transition-transform hover:scale-[1.02]">
+                            <div class="p-5">
+                                <!-- Header: Pathogen and Crop Tag -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <!-- This DIV is now the clickable trigger -->
+                                    <div class="clickable-header cursor-pointer group" data-pathogen="${primer.pathogen}" data-organism="${primer.organism}" data-primer-name="${primer.primerName}">
+                                        <h3 class="text-xl font-bold text-white group-hover:text-green-400 transition-colors">${primer.pathogen}</h3>
+                                        <p class="text-sm text-gray-400 italic">${primer.organism}</p>
+                                    </div>
+                                    <span class="text-xs font-semibold py-1 px-3 rounded-full ${cropTagColor}">
+                                        ${primer.crop.toUpperCase()}
+                                    </span>
+                                </div>
+
+                                <!-- Primer Details -->
+                                <div class="space-y-4">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">Primer Name:</span>
+                                        <span class="font-medium text-white">${primer.primerName}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">Test Type:</span>
+                                        <span class="font-medium text-white">${primer.type}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">Product Size:</span>
+                                        <span class="font-medium text-white">${primer.productSize}</span>
+                                    </div>
+
+                                    <!-- Sequences with Copy Buttons -->
+                                    <div class="font-mono text-sm">
+                                        <div class="flex justify-between items-center group">
+                                            <span class="text-green-400">F:</span>
+                                            <span class="text-gray-200 ml-2 truncate">${primer.forward}</span>
+                                            <button class="copy-btn ml-auto pl-2 text-gray-500 hover:text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" data-sequence="${primer.forward}">Copy</button>
+                                        </div>
+                                        <div class="flex justify-between items-center group">
+                                            <span class="text-green-400">R:</span>
+                                            <span class="text-gray-200 ml-2 truncate">${primer.reverse}</span>
+                                            <button class="copy-btn ml-auto pl-2 text-gray-500 hover:text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" data-sequence="${primer.reverse}">Copy</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- New Reference Line -->
+                                    <div class="pt-3 border-t border-gray-700">
+                                        <p class="text-xs text-gray-500 truncate" title="${primer.reference}">
+                                            <span class="font-semibold">Source:</span> ${primer.reference}
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- --- New AI Button --- -->
+                                    <div class="mt-4 text-right">
+                                        <button class="ai-btn ai-button" data-pathogen="${primer.pathogen}" data-organism="${primer.organism}" data-primer-name="${primer.primerName}">
+                                            ✨ Learn More
+                                        </button>
+                                    </div>
+                                    <!-- --- End New AI Button --- -->
+
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.innerHTML += cardHTML;
+                });
+            }
+
+            /**
+             * Copies text to the clipboard and provides user feedback.
+             * @param {string} text - The text to copy.
+             * @param {HTMLElement} button - The button that was clicked.
+             */
+            function copyToClipboard(text, button) {
+                // Use document.execCommand for iFrame compatibility
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed'; // prevent scrolling to bottom
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    button.textContent = 'Copied!';
+                    button.classList.add('text-green-500');
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                        button.classList.remove('text-green-500');
+                    }, 1500);
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                    button.textContent = 'Failed!';
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                    }, 1500);
+                }
+                document.body.removeChild(ta);
+            }
+            
+            /**
+             * Gets filters and search term, filters the DB, and re-renders the list.
+             */
+            function filterAndRender() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                const filteredDB = primerDB.filter(primer => {
+                    // 1. Check crop filter
+                    const cropMatch = (currentFilter === 'all') || (primer.crop === currentFilter);
+                    
+                    if (!cropMatch) return false;
+
+                    // 2. Check search term
+                    const searchMatch = (
+                        primer.pathogen.toLowerCase().includes(searchTerm) ||
+                        primer.organism.toLowerCase().includes(searchTerm) ||
+                        primer.primerName.toLowerCase().includes(searchTerm) ||
+                        primer.forward.toLowerCase().includes(searchTerm) ||
+                        primer.reverse.toLowerCase().includes(searchTerm)
+                    );
+
+                    return searchMatch;
+                });
+
+                renderPrimers(filteredDB);
+            }
+
+            // --- New Gemini API Functions ---
+
+            /**
+             * Shows the AI modal in its loading state.
+             * @param {string} title - The title to display (e.g., "Learning about...")
+             */
+            function showAiModal(title) {
+                aiModalTitle.textContent = title;
+                aiModalLoader.classList.remove('hidden');
+                aiModalResponse.classList.add('hidden');
+                aiModal.classList.remove('opacity-0', 'pointer-events-none');
+                aiModal.querySelector('.modal-content').classList.remove('scale-95');
+            }
+
+            /**
+             * Hides the AI modal.
+             */
+            function hideAiModal() {
+                aiModal.classList.add('opacity-0', 'pointer-events-none');
+                aiModal.querySelector('.modal-content').classList.add('scale-95');
+            }
+
+            /**
+             * Populates the AI modal with content from the Gemini API.
+             * @param {string} text - The main text content.
+             * @param {Array} sources - An array of {uri, title} objects.
+             */
+            function showAiResponse(text, sources) {
+                // --- Clean the text of common markdown artifacts ---
+                let cleanedText = text;
+                
+                // Remove ### headers, keeping the text
+                cleanedText = cleanedText.replace(/^###\s+(.*$)/gim, '$1'); 
+                
+                // Remove horizontal rules like *** or ---
+                cleanedText = cleanedText.replace(/^\s*(\*|-){3,}\s*$/gim, '\n'); // Replace rule with a newline
+
+                // Remove bolding **text** -> text
+                cleanedText = cleanedText.replace(/\*\*(.*?)\*\*/g, '$1');
+
+                // Remove italics *text* -> text
+                cleanedText = cleanedText.replace(/\*(.*?)\*/g, '$1');
+
+                // Remove list bullets (*, -, 1.) but keep the text
+                cleanedText = cleanedText.replace(/^[\s*+-]+\s+/gm, '');
+                cleanedText = cleanedText.replace(/^\d+\.\s+/gm, '');
+                
+                // --- END NEW ---
+
+                aiModalContent.textContent = cleanedText.trim(); // Use the cleaned and trimmed text
+                
+                aiModalSources.innerHTML = ''; // Clear old sources
+                if (sources.length > 0) {
+                    sources.forEach(source => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a href="${source.uri}" target="_blank" class="text-emerald-400 hover:underline">${source.title}</a>`;
+                        aiModalSources.appendChild(li);
+                    });
+                } else {
+                    aiModalSources.innerHTML = '<li>No web sources found.</li>';
+                }
+
+                aiModalLoader.classList.add('hidden');
+                aiModalResponse.classList.remove('hidden');
+            }
+
+            /**
+             * Calls the Gemini API with exponential backoff.
+             * @param {string} pathogen
+             * @param {string} organism
+             * @param {string} primerName
+             */
+            async function callGeminiAPI(pathogen, organism, primerName) {
+                showAiModal(`Learning about ${pathogen}...`);
+
+                const systemPrompt = "You are a helpful research assistant specializing in plant pathology and molecular biology. Your audience is a lab technician or researcher. Keep your answers concise, informative, and professional.";
+                
+                const userQuery = `I'm looking for information on the plant pathogen "${pathogen}" (${organism}). 
+1. Provide a brief, 1-paragraph summary of the disease, what crop it affects, and its primary symptoms.
+2. The static database lists "${primerName}" as a diagnostic primer. Using Google Search, find 2-3 other common and validated primer pairs (Name, Forward, Reverse) used for PCR or qPCR detection of this pathogen. Format them clearly.`;
+
+                
+                const apiKey = "AIzaSyAqi1MawsNtgS65jd0LVTs3AHtjZI-Y0oM";
+               
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+
+                try {
+                    const response = await fetchWithBackoff(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const text = candidate.content.parts[0].text;
+                        
+                        let sources = [];
+                        const groundingMetadata = candidate.groundingMetadata;
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attr => ({
+                                    uri: attr.web?.uri,
+                                    title: attr.web?.title,
+                                }))
+                                .filter(source => source.uri && source.title);
+                        }
+
+                        // Update modal with results
+                        aiModalTitle.textContent = `About ${pathogen}`;
+                        showAiResponse(text, sources);
+
+                    } else {
+                        throw new Error("Invalid response structure from API.");
+                    }
+
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    aiModalTitle.textContent = "Error";
+                    showAiResponse(`Failed to get information. Please check the console for details.\n\n${error.message}`, []);
+                }
+            }
+
+            /**
+             * A wrapper for fetch that includes exponential backoff.
+             */
+            async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429 && retries > 0) { // Throttling
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                    }
+                    return response;
+                } catch (error) {
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                    }
+                    throw error;
+                }
+            }
+
+
+            // --- Initial Setup & Event Listeners ---
+
+            // Initial render of all primers
+            renderPrimers(primerDB);
+
+            // Listener for the search bar
+            searchInput.addEventListener('input', filterAndRender);
+
+            // --- Delegated Event Listener for Cards ---
+            resultsContainer.addEventListener('click', (e) => {
+                // Check if a copy button was clicked
+                const copyButton = e.target.closest('.copy-btn');
+                if (copyButton) {
+                    const sequence = copyButton.dataset.sequence;
+                    copyToClipboard(sequence, copyButton);
+                    return; // Stop further processing
+                }
+
+                // Check if an AI button OR the clickable header was clicked
+                const aiTrigger = e.target.closest('.ai-btn, .clickable-header');
+                if (aiTrigger) {
+                    const { pathogen, organism, primerName } = aiTrigger.dataset;
+                    callGeminiAPI(pathogen, organism, primerName);
+                    return; // Stop further processing
+                }
+            });
+
+            // --- Modal Close Listeners ---
+            aiModalCloseBtn.addEventListener('click', hideAiModal);
+            aiModal.addEventListener('click', (e) => {
+                // Close if clicking on the backdrop
+                if (e.target === aiModal) {
+                    hideAiModal();
+                }
+            });
+
+
+            // Listener for the filter buttons
+            filterContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-filter')) {
+                    // Remove 'active' from all buttons
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add 'active' to the clicked button
+                    e.target.classList.add('active');
+                    // Update the filter
+                    currentFilter = e.target.dataset.filter;
+                    // Re-render
+                    filterAndRender();
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+
